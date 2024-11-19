@@ -11,8 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('vista_foto_portada', function (Blueprint $table) {
+        Schema::create('publicacion', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('fk_usuario_id');
+            $table->foreign('fk_usuario_id')->references('id')->on('usuario')->onDelete('cascade');
+            $table->text('contenido');
+            $table->dateTime('fecha_publicacion');
             $table->timestamps();
         });
     }
@@ -22,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('vista_foto_portada');
+        Schema::dropIfExists('publicacion');
     }
 };

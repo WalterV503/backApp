@@ -22,6 +22,9 @@ return new class extends Migration
             $table->string('nombre');
             $table->string('apellido');
             $table->string('direccion');
+            //Agregamos estos campos
+            $table->string('foto_perfil');
+            $table->string('foto_portada');
             $table->timestamps();
         });
     }

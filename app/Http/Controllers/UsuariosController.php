@@ -25,7 +25,9 @@ class UsuariosController extends Controller
                 'telefono' => 'required|string|max:15',
                 'genero' => 'required|string',
                 'apellido' => 'required|string',
-                'nombre' => 'required|string'
+                'nombre' => 'required|string',
+                'foto_perfil' => 'nullable|string|max:2048',
+                'foto_portada' => 'nullable|string|max:2048'
             ]);
 
             if ($validacion->fails()) {
@@ -44,7 +46,9 @@ class UsuariosController extends Controller
                 'fecha_nacimiento' => $request->fecha_nacimiento,
                 'direccion' => $request->direccion,
                 'telefono' => $request->telefono,
-                'genero' => $request->genero
+                'genero' => $request->genero,
+                'foto_perfil' => $request->foto_perfil,
+                'foto_portada' => $request->foto_portada
             ]);
 
             $token = $usuario->createToken('api-key')->plainTextToken;

@@ -11,8 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('vista_foto_perfil', function (Blueprint $table) {
+        Schema::create('tipo_foto', function (Blueprint $table) {
             $table->id();
+            $table->string('Nombre_Tipo_Foto');
+            //foto de portada, publicacion o perfil
             $table->timestamps();
         });
     }
@@ -22,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('vista_foto_perfil');
+        Schema::dropIfExists('tipo_foto');
     }
 };
