@@ -58,7 +58,6 @@ class UsuariosController extends Controller
                 'data' => $usuario,
                 'token' => $token
             ], 200);
-
         } catch (\Exception $e) {
             return response()->json([
                 'code' => 500,
@@ -71,7 +70,8 @@ class UsuariosController extends Controller
     {
         try {
             $validacion = Validator::make($request->all(), [
-                'email' => 'required|email',
+                'nombre_usuario' => 'required_without:email|string|max:255',
+                'email' => 'required_without|email',
                 'password' => 'required|min:8'
             ]);
 
@@ -88,6 +88,13 @@ class UsuariosController extends Controller
                         'data' => $usuario,
                         'token' => $usuario->createToken('api-key')->plainTextToken
                     ], 200);
+                } elseif (Auth::attempt(['nombre_usuario' => $request->nombre_usuario, 'password' => $request->password])) {
+                    $usuario = User::where('nombre_usuario', $request->nombre_usuario)->first();
+                    return response()->json([
+                        'code' => 200,
+                        'data' => $usuario,
+                        'token' => $usuario->createToken('api-key')->plainTextToken
+                    ], 200);
                 } else {
                     return response()->json([
                         'code' => 401,
@@ -97,6 +104,46 @@ class UsuariosController extends Controller
             }
         } catch (\Throwable $th) {
             return response()->json($th->getMessage(), 500);
+        }
+    }
+
+    public function search(Request $request)
+    {
+        try {
+            $query = $request->input('query');
+
+            if (!$query || trim($query) === '') {
+                // Cargar usuarios al azar si no se proporciona un query
+                $usuarios = User::inRandomOrder()->take(10)->get();
+
+                return response()->json([
+                    'code' => 200,
+                    'data' => $usuarios
+                ], 200);
+            }
+
+            // Buscar usuarios según el criterio ingresado
+            $usuarios = User::where('nombre', 'LIKE', "%$query%")
+                ->orWhere('apellido', 'LIKE', "%$query%")
+                ->orWhere('nombre_usuario', 'LIKE', "%$query%")
+                ->get();
+
+            if ($usuarios->isEmpty()) {
+                return response()->json([
+                    'code' => 404,
+                    'message' => 'No se encontraron usuarios'
+                ], 404);
+            }
+
+            return response()->json([
+                'code' => 200,
+                'data' => $usuarios
+            ], 200);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'code' => 500,
+                'message' => 'Error en el servidor: ' . $th->getMessage()
+            ], 500);
         }
     }
 }
