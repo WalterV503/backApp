@@ -15,6 +15,38 @@ Route::get('/user', function (Request $request) {
 Route::post('/usuario/register', [UsuariosController::class, 'register']);
 Route::post('/usuario/autentificacion', [UsuariosController::class, 'autentificacion']);
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*
     GESTION DE LA TABLA 'REACCION'
 */
