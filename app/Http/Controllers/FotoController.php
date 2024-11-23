@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\FotoModel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -77,10 +78,30 @@ class FotoController extends Controller
                 'fecha_subida' => now(),
             ]);
 
-            return response()->json([
-                'message' => 'Foto subida y guardada correctamente.',
-                'data' => $foto,
-            ], 201);
+            $usuarioId = $validaciones->validated()['fk_usuario_id'];
+            $tipoFotoId = $validaciones->validated()['fk_tipoFoto_id'];
+            $urlFoto = Storage::url($path); 
+
+            $dataToUpdate = [];
+            if ($tipoFotoId == 1) {
+                $dataToUpdate = ['foto_perfil' => $urlFoto];
+            } elseif ($tipoFotoId == 3) {
+                $dataToUpdate = ['foto_portada' => $urlFoto];
+            }
+
+            $response = Http::put("http://127.0.0.1:8000/api/usuario/actualizar/{$usuarioId}", $dataToUpdate);
+
+            if ($response->successful()) {
+                return response()->json([
+                    'message' => 'Foto subida y guardada correctamente, y el usuario ha sido actualizado.',
+                    'data' => $foto,
+                ], 201);
+            } else {
+                return response()->json([
+                    'code' => 500,
+                    'data' => 'Error al actualizar el usuario en la API externa.'
+                ], 500);
+            }
         } catch (\Throwable $th) {
             if (app()->environment('local')) {
                 return response()->json(['error' => $th->getMessage()], 500);
@@ -112,105 +133,141 @@ class FotoController extends Controller
     /**
      * Update the specified resource in storage.
      */
+
+
     public function update(Request $request, $id)
     {
         try {
-            $validaciones = Validator::make($request->all(), [
-                'fk_usuario_id' => 'nullable|exists:usuario,id',
-                'fk_tipoFoto_id' => 'nullable|exists:tipo_foto,id',
-                'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            ]);
 
+            $validaciones = Validator::make($request->all(), [
+                'fk_usuario_id' => 'required|exists:usuario,id',
+                'fk_tipoFoto_id' => 'required|exists:tipo_foto,id',
+                'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+            ]);
+    
             if ($validaciones->fails()) {
                 return response()->json([
                     'code' => 400,
-                    'data' => $validaciones->messages(),
+                    'data' => $validaciones->messages()
                 ], 400);
-            } else {
-                $foto = FotoModel::find($id);
+            }
+            $foto = FotoModel::find($id);
+    
+            if ($foto) {
 
-                if ($foto) {
-                    // Si se sube una nueva foto, eliminar la foto anterior
-                    if ($request->hasFile('photo')) {
-                        // Verificar si la foto anterior existe y eliminarla
-                        $rutaAnterior = public_path('storage/' . $foto->url_foto);
-                        if (file_exists($rutaAnterior)) {
-                            unlink($rutaAnterior); // Eliminar la foto físicamente
-                        }
-
-                        // Subir la nueva imagen y obtener la ruta
-                        $path = $request->file('photo')->store('photos', 'public');
-
-                        // Actualizar la URL de la foto
-                        $foto->url_foto = Storage::url($path);
+                if ($request->hasFile('photo')) {
+                    $rutaAnterior = public_path('storage/' . $foto->url_foto);
+                    if (file_exists($rutaAnterior)) {
+                        unlink($rutaAnterior);
                     }
+                    $path = $request->file('photo')->store('photos', 'public');
+                    $foto->url_foto = Storage::url($path);
+                }
+    
+                $foto->update($request->except(['photo'])); 
+    
+                $usuarioId = $validaciones->validated()['fk_usuario_id'];
+                $tipoFotoId = $validaciones->validated()['fk_tipoFoto_id'];
+                $urlFoto = $foto->url_foto; 
 
-                    $foto->fk_usuario_id = $request->input('fk_usuario_id', $foto->fk_usuario_id);
-                    $foto->fk_tipoFoto_id = $request->input('fk_tipoFoto_id', $foto->fk_tipoFoto_id);
-                    $foto->fecha_subida = now();
-
-                    $foto->save();
-
+                $dataToUpdate = [];
+                if ($tipoFotoId == 1) {
+                    $dataToUpdate = ['foto_perfil' => $urlFoto];
+                } elseif ($tipoFotoId == 3) {
+                    $dataToUpdate = ['foto_portada' => $urlFoto];
+                }
+ 
+                $response = Http::put("http://127.0.0.1:8000/api/usuario/actualizar/{$usuarioId}", $dataToUpdate);
+    
+                if ($response->successful()) {
                     return response()->json([
-                        'message' => 'Foto actualizada correctamente.',
-                        'data' => $foto,
-                    ], 200);
+                        'code' => 200,
+                        'data' => 'Foto actualizada correctamente y usuario actualizado.'
+                    ]);
                 } else {
                     return response()->json([
-                        'code' => 404,
-                        'data' => 'Foto no encontrada',
-                    ], 404);
+                        'code' => 500,
+                        'data' => 'Error al actualizar el usuario en la API externa.'
+                    ], 500);
                 }
+    
+            } else {
+                return response()->json([
+                    'code' => 404,
+                    'data' => 'Foto no encontrada'
+                ], 404);
             }
+    
         } catch (\Throwable $th) {
             if (app()->environment('local')) {
-                return response()->json($th->getMessage(), 500);
+                return response()->json(['error' => $th->getMessage()], 500);
             }
             return response()->json([
                 'code' => 500,
-                'data' => 'Error en el servidor',
+                'data' => 'Error en el servidor'
             ]);
         }
     }
+    
+
 
 
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($id)
-    {
-        try {
-            $foto = FotoModel::find($id);
 
-            if ($foto) {
-                $ruta = public_path('storage/' . $foto->url_foto);
+public function destroy($id)
+{
+    try {
+        $foto = FotoModel::find($id);
 
-                if (file_exists($ruta)) {
-                    unlink($ruta);
-                }
-
-                $foto->delete();
-
-                return response()->json([
-                    'code' => '200.',
-                    'data' => 'Foto eliminada correctamente'
-                ], 200);
-            } else {
-                return response()->json([
-                    'code' => 400,
-                    'data' => 'La foto no se encuentra en nuestros registros'
-                ]);
+        if ($foto) {
+            $ruta = public_path('storage/' . $foto->url_foto);
+            if (file_exists($ruta)) {
+                unlink($ruta);
             }
-        } catch (\Throwable $th) {
-            if (app()->environment('local')) {
-                return response()->json($th->getMessage(), 500);
+            $tipoFotoId = $foto->fk_tipoFoto_id;
+            $foto->delete();
+
+            $usuarioId = $foto->fk_usuario_id;
+            $dataToUpdate = [];
+
+            if ($tipoFotoId == 1) {
+                $dataToUpdate = ['foto_perfil' => 'No hay foto'];
+            } elseif ($tipoFotoId == 3) {
+                $dataToUpdate = ['foto_portada' => 'No hay foto'];
+            }
+
+            $response = Http::put("http://127.0.0.1:8000/api/usuario/actualizar/{$usuarioId}", $dataToUpdate);
+
+            if ($response->successful()) {
+                return response()->json([
+                    'code' => 200,
+                    'data' => 'Foto eliminada correctamente y usuario actualizado.'
+                ]);
             } else {
                 return response()->json([
                     'code' => 500,
-                    'data' => 'Error en el servidor'
-                ]);
+                    'data' => 'Error al actualizar el usuario en la API externa.'
+                ], 500);
             }
+
+        } else {
+            return response()->json([
+                'code' => 400,
+                'data' => 'La foto no se encuentra en nuestros registros'
+            ]);
         }
+    } catch (\Throwable $th) {
+        if (app()->environment('local')) {
+            return response()->json(['error' => $th->getMessage()], 500);
+        }
+        return response()->json([
+            'code' => 500,
+            'data' => 'Error en el servidor'
+        ]);
     }
+}
+
 }
