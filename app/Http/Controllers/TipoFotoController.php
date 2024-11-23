@@ -66,7 +66,7 @@ class TipoFotoController extends Controller
 
                 return response()->json([
                     'code' => 200,
-                    'data' => 'Producto creado exitosamente'
+                    'data' => 'Tipo Foto creado exitosamente'
                 ], 200);
             }
         }catch(\Throwable $th){

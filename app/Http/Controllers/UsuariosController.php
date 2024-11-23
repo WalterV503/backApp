@@ -26,8 +26,8 @@ class UsuariosController extends Controller
                 'genero' => 'required|string',
                 'apellido' => 'required|string',
                 'nombre' => 'required|string',
-                'foto_perfil' => 'nullable|string|max:2048',
-                'foto_portada' => 'nullable|string|max:2048'
+                'foto_perfil' => 'required_without:nombre|string|max:2048',
+                'foto_portada' => 'required_without:nombre|string|max:2048'
             ]);
 
             if ($validacion->fails()) {
@@ -122,7 +122,7 @@ class UsuariosController extends Controller
                 ], 200);
             }
 
-            // Buscar usuarios según el criterio ingresado
+            
             $usuarios = User::where('nombre', 'LIKE', "%$query%")
                 ->orWhere('apellido', 'LIKE', "%$query%")
                 ->orWhere('nombre_usuario', 'LIKE', "%$query%")
@@ -144,6 +144,47 @@ class UsuariosController extends Controller
                 'code' => 500,
                 'message' => 'Error en el servidor: ' . $th->getMessage()
             ], 500);
+        }
+    }
+
+    public function actualizarRegistro(Request $request, $id)
+    {
+        try{
+            $validacion = Validator::make($request->all(),[
+                "foto_perfil" => "required_without:foto_portada|string|max:255",
+                "foto_portada" => "required_without:foto_perfil|string|max:255" 
+            ]);
+
+            if($validacion->fails()){
+                return response()->json([
+                    'code' => 400,
+                    'data' => $validacion->messages()
+                ], 400);
+            }else{
+                $usuario = User::find($id);
+
+                if($usuario){
+                    $usuario->update($request->all());
+                    return response()->json([
+                        'code' => 200,
+                        'data' => 'Registro actualizado correctamente'
+                    ]);
+                }else{
+                    return response()->json([
+                        'code' => 404,
+                        'data' => 'Foto no encontrada'
+                    ]);
+                }
+            }
+        }catch(\Throwable $th){
+            if(app()->environment('local')){
+                return response()->json($th->getMessage(), 500);
+            }else{
+                return response()->json([
+                    'code' => 500,
+                    'data' => 'Error en el servidor'
+                ]);
+            }
         }
     }
 }
