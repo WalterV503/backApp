@@ -136,7 +136,7 @@ class PublicacionFotoController extends Controller
     public function destroy($fk_publicacion_id)
     {
         try {
-            // Buscar la relación en la tabla publicacion_foto
+
             $publicacionFoto = PublicacionFotoModel::where('fk_publicacion_id', $fk_publicacion_id)->first();
 
             if (!$publicacionFoto) {
@@ -146,36 +146,32 @@ class PublicacionFotoController extends Controller
                 ], 404);
             }
 
-            // Obtener IDs de la publicación y foto
             $fotoId = $publicacionFoto->fk_foto_id;
 
-            // Eliminar la relación primero
             $publicacionFoto->delete();
 
-            // Eliminar la publicación asociada
             $publicacion = PublicacionModel::find($fk_publicacion_id);
             if ($publicacion) {
                 $publicacion->delete();
             }
 
-            // Eliminar la foto asociada
-            $foto = FotoModel::find($fotoId);
-            if ($foto) {
-                // Si se usa almacenamiento local, eliminar el archivo físico también
-                if (Storage::exists("public/{$foto->url_foto}")) {
-                    Storage::delete("public/{$foto->url_foto}");
-                }
+        $foto = FotoModel::find($fotoId);
+        if ($foto) {
+            $ruta = public_path('storage/' . $foto->url_foto);
 
-                $foto->delete();
+            if (file_exists($ruta)) {
+                unlink($ruta); 
             }
 
-            // Responder con éxito
-            return response()->json([
-                'code' => 200,
-                'message' => 'La publicación y la foto asociadas han sido eliminadas correctamente.',
-            ], 200);
+            $foto->delete(); 
+        }
+
+        return response()->json([
+            'code' => 200,
+            'message' => 'La publicación y la foto asociadas han sido eliminadas correctamente.',
+        ], 200);
+
         } catch (\Throwable $th) {
-            // Manejo de errores
             if (app()->environment('local')) {
                 return response()->json([
                     'error' => $th->getMessage(),
