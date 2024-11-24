@@ -35,3 +35,12 @@ Route::get('/publicacion/obtener', [PublicacionController::class, 'index']);
 Route::delete('/publicacion/eliminar/{id}', [PublicacionController::class, 'destroy']);
 
 Route::put('/publicacionFoto/actualizar/{id}', [PublicacionFotoController::class, 'update']);
+
+
+
+
+
+
+
+//obtener publicaiones por id de usuario
+Route::get('/publicacion/find/{id}', [PublicacionController::class, 'PostById']);
