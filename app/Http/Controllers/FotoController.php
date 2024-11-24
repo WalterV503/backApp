@@ -55,12 +55,12 @@ class FotoController extends Controller
     public function store(Request $request)
     {
         try {
-            // Validar los datos recibidos
+
             $validaciones = Validator::make($request->all(), [
                 'fk_usuario_id' => 'required|exists:usuario,id',
                 'fk_tipoFoto_id' => 'required|exists:tipo_foto,id',
                 'photo' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-                'contenido' => 'nullable|string|max:255', // Validar el contenido si se envía
+                'contenido' => 'nullable|string|max:255', 
             ]);
 
             if ($validaciones->fails()) {
@@ -70,11 +70,11 @@ class FotoController extends Controller
                 ], 400);
             }
 
-            // Subir la foto al almacenamiento
-            $path = $request->file('photo')->store('photos', 'public');
-            $urlFoto = Storage::url($path); // Obtener la URL pública del archivo
 
-            // Crear la entrada en la base de datos para la foto
+            $path = $request->file('photo')->store('photos', 'public');
+            $urlFoto = Storage::url($path); 
+
+
             $foto = FotoModel::create([
                 'fk_usuario_id' => $validaciones->validated()['fk_usuario_id'],
                 'fk_tipoFoto_id' => $validaciones->validated()['fk_tipoFoto_id'],
@@ -118,7 +118,7 @@ class FotoController extends Controller
                             'data' => 'Error al crear la publicación en la API externa.'
                         ], 500);
                     } else {
-                        // Respuesta exitosa
+                        
                         return response()->json([
                             'code' => 201,
                             'message' => 'Foto subida y procesada correctamente.',
@@ -128,7 +128,7 @@ class FotoController extends Controller
                 }
             }
         } catch (\Throwable $th) {
-            // Manejo de excepciones
+           
             if (app()->environment('local')) {
                 return response()->json(['error' => $th->getMessage()], 500);
             }
