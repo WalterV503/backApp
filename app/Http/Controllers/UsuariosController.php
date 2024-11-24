@@ -122,11 +122,8 @@ class UsuariosController extends Controller
                 ], 200);
             }
 
-            
-            $usuarios = User::where('nombre', 'LIKE', "%$query%")
-                ->orWhere('apellido', 'LIKE', "%$query%")
-                ->orWhere('nombre_usuario', 'LIKE', "%$query%")
-                ->get();
+
+            $usuarios = User::where('nombre_usuario', 'LIKE', "%$query%")->get();
 
             if ($usuarios->isEmpty()) {
                 return response()->json([
@@ -149,42 +146,69 @@ class UsuariosController extends Controller
 
     public function actualizarRegistro(Request $request, $id)
     {
-        try{
-            $validacion = Validator::make($request->all(),[
+        try {
+            $validacion = Validator::make($request->all(), [
                 "foto_perfil" => "required_without:foto_portada|string|max:255",
-                "foto_portada" => "required_without:foto_perfil|string|max:255" 
+                "foto_portada" => "required_without:foto_perfil|string|max:255"
             ]);
 
-            if($validacion->fails()){
+            if ($validacion->fails()) {
                 return response()->json([
                     'code' => 400,
                     'data' => $validacion->messages()
                 ], 400);
-            }else{
+            } else {
                 $usuario = User::find($id);
 
-                if($usuario){
+                if ($usuario) {
                     $usuario->update($request->all());
                     return response()->json([
                         'code' => 200,
                         'data' => 'Registro actualizado correctamente'
                     ]);
-                }else{
+                } else {
                     return response()->json([
                         'code' => 404,
                         'data' => 'Foto no encontrada'
                     ]);
                 }
             }
-        }catch(\Throwable $th){
-            if(app()->environment('local')){
+        } catch (\Throwable $th) {
+            if (app()->environment('local')) {
                 return response()->json($th->getMessage(), 500);
-            }else{
+            } else {
                 return response()->json([
                     'code' => 500,
                     'data' => 'Error en el servidor'
                 ]);
             }
+        }
+    }
+
+    //obtener Usuario por id
+    public function FindUser($id)
+    {
+        try {
+            // Se busca el estudiante
+            $usuario = User::find($id);
+            if ($usuario) {
+                // Si existe se retorna la información en formato json
+                return response()->json([
+                    'code' => 200,
+                    'data' => $usuario
+                ], 200);
+            } else {
+                // Si no existe se retorna un mensaje en formato json
+                return response()->json([
+                    'code' => 404,
+                    'data' => 'Usuario no encontrado'
+                ], 404);
+            }
+        } catch (\Throwable $th) {
+            return response()->json([
+                'code' => 500,
+                'message' => 'Error en el servidor: ' . $th->getMessage()
+            ], 500);
         }
     }
 }

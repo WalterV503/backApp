@@ -14,6 +14,8 @@ Route::post('/usuario/register', [UsuariosController::class, 'register']);
 Route::post('/usuario/autentificacion', [UsuariosController::class, 'autentificacion']);
 Route::put('/usuario/actualizar/{id}', [UsuariosController::class, 'actualizarRegistro']);
 Route::get('/usuario/buscar', [UsuariosController::class, 'search']);
+Route::get('/usuario/find/{id}', [UsuariosController::class, 'FindUser']);
+
 
 Route::get('/tipoFoto/obtener', [TipoFotoController::class, 'index']);
 Route::post('/tipoFoto/crear', [TipoFotoController::class, 'store']);
