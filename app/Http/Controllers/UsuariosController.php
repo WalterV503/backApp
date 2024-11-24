@@ -123,9 +123,7 @@ class UsuariosController extends Controller
             }
 
             
-            $usuarios = User::where('nombre', 'LIKE', "%$query%")
-                ->orWhere('apellido', 'LIKE', "%$query%")
-                ->orWhere('nombre_usuario', 'LIKE', "%$query%")
+            $usuarios = User::where('nombre_usuario', 'LIKE', "%$query%")
                 ->get();
 
             if ($usuarios->isEmpty()) {

@@ -16,7 +16,7 @@ class PublicacionSeeder extends Seeder
         DB::table('publicacion')->insert([
             'fk_usuario_id' => 1,
             'contenido' => 'Este es un mensaje de prueba de publicacion',
-            'fecha_publicacion' => now()
+            'url_publicacion' => ''
         ]);
     }
 }
