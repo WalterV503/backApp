@@ -32,4 +32,6 @@ Route::post('/publicacion/crear', [PublicacionController::class, 'store']);
 Route::get('/publicacion/obtener', [PublicacionController::class, 'index']);
 Route::delete('/publicacion/eliminar/{id}', [PublicacionController::class, 'destroy']);
 
-Route::put('/publicacionFoto/actualizar/{id}', [PublicacionFotoController::class, 'update']);
+
+Route::delete('/publicacionFoto/eliminar/{id}', [PublicacionFotoController::class, 'destroy']);
+Route::get('/publicacionFoto/obtener', [PublicacionFotoController::class, 'index']);

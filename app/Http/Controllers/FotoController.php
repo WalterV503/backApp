@@ -85,11 +85,10 @@ class FotoController extends Controller
             $usuarioId = $validaciones->validated()['fk_usuario_id'];
             $tipoFotoId = $validaciones->validated()['fk_tipoFoto_id'];
 
-            // Actualizar el usuario dependiendo del tipo de foto
             $dataToUpdate = [];
-            if ($tipoFotoId == 1) { // Foto de perfil
+            if ($tipoFotoId == 1) {
                 $dataToUpdate = ['foto_perfil' => $urlFoto];
-            } elseif ($tipoFotoId == 3) { // Foto de portada
+            } elseif ($tipoFotoId == 3) {
                 $dataToUpdate = ['foto_portada' => $urlFoto];
             }
 
@@ -103,12 +102,12 @@ class FotoController extends Controller
                     ], 500);
                 }
             } else {
-                // Crear una publicación si el tipo de foto es 2
                 if ($tipoFotoId == 2) {
                     $dataCreatePublicacion = [
                         'fk_usuario_id' => $usuarioId,
                         'url_publicacion' => $urlFoto,
-                        'contenido' => $request->contenido, // Obtener el contenido desde el request
+                        'contenido' => $request->contenido,
+                        'fk_foto_id' => $foto->id
                     ];
 
                     $response = Http::post("http://127.0.0.1:8000/api/publicacion/crear", $dataCreatePublicacion);
@@ -118,14 +117,14 @@ class FotoController extends Controller
                             'code' => 500,
                             'data' => 'Error al crear la publicación en la API externa.'
                         ], 500);
+                    } else {
+                        // Respuesta exitosa
+                        return response()->json([
+                            'code' => 201,
+                            'message' => 'Foto subida y procesada correctamente.',
+                            'data' => $foto,
+                        ], 201);
                     }
-                } else {
-                    // Respuesta exitosa
-                    return response()->json([
-                        'code' => 201,
-                        'message' => 'Foto subida y procesada correctamente.',
-                        'data' => $foto,
-                    ], 201);
                 }
             }
         } catch (\Throwable $th) {
