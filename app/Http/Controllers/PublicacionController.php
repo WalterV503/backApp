@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\PublicacionModel;
 use App\Models\PublicacionFotoModel;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 
 class PublicacionController extends Controller
