@@ -75,10 +75,10 @@ Route::delete('/mensaje/delete/{id}', [MensajeController::class, 'delete']);
 Route::get('/mensaje/find/{id}', [MensajeController::class, 'find']);
 
 /*
-    GESTION DE LA TABLA 'PUBLICACION_FOTO'
+    GESTION DE LA TABLA 'PUBLICACION_FOTO' ***ELIMINADO***
 */
-Route::get('/publicacion_foto/select', [PublicacionFotoController::class, 'select']); 
-Route::post('/publicacion_foto/store', [PublicacionFotoController::class, 'store']);
-Route::put('/publicacion_foto/update/{fk_publicacion_id}/{fk_foto_id}', [PublicacionFotoController::class, 'update']);
-Route::delete('/publicacion_foto/delete/{fk_publicacion_id}/{fk_foto_id}', [PublicacionFotoController::class, 'delete']);
-Route::get('/publicacion_foto/find/{fk_publicacion_id}/{fk_foto_id}', [PublicacionFotoController::class, 'find']);
+// Route::get('/publicacion_foto/select', [PublicacionFotoController::class, 'select']); 
+// Route::post('/publicacion_foto/store', [PublicacionFotoController::class, 'store']);
+// Route::put('/publicacion_foto/update/{fk_publicacion_id}/{fk_foto_id}', [PublicacionFotoController::class, 'update']);
+// Route::delete('/publicacion_foto/delete/{fk_publicacion_id}/{fk_foto_id}', [PublicacionFotoController::class, 'delete']);
+// Route::get('/publicacion_foto/find/{fk_publicacion_id}/{fk_foto_id}', [PublicacionFotoController::class, 'find']);
