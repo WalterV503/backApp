@@ -8,5 +8,5 @@ class PublicacionModel extends Model
 {
     protected $table = 'publicacion';
 
-    protected $fillable = [ 'fk_usuario_id', 'contenido', 'fecha_publicacion'];
+    protected $fillable = [ 'fk_usuario_id', 'contenido', 'url_publicacion'];
 }

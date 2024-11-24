@@ -16,5 +16,11 @@ class TipoFotoSeeder extends Seeder
         DB::table('tipo_foto')->insert([
             'Nombre_Tipo_Foto' => 'Perfil'
         ]);
+        DB::table('tipo_foto')->insert([
+            'Nombre_Tipo_Foto' => 'Publicacion'
+        ]);
+        DB::table('tipo_foto')->insert([
+            'Nombre_Tipo_Foto' => 'Portada'
+        ]);
     }
 }

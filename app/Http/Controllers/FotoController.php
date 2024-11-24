@@ -55,11 +55,12 @@ class FotoController extends Controller
     public function store(Request $request)
     {
         try {
-
+            // Validar los datos recibidos
             $validaciones = Validator::make($request->all(), [
                 'fk_usuario_id' => 'required|exists:usuario,id',
                 'fk_tipoFoto_id' => 'required|exists:tipo_foto,id',
-                'photo' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
+                'photo' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'contenido' => 'nullable|string|max:255', // Validar el contenido si se envía
             ]);
 
             if ($validaciones->fails()) {
@@ -69,8 +70,11 @@ class FotoController extends Controller
                 ], 400);
             }
 
+            // Subir la foto al almacenamiento
             $path = $request->file('photo')->store('photos', 'public');
+            $urlFoto = Storage::url($path); // Obtener la URL pública del archivo
 
+            // Crear la entrada en la base de datos para la foto
             $foto = FotoModel::create([
                 'fk_usuario_id' => $validaciones->validated()['fk_usuario_id'],
                 'fk_tipoFoto_id' => $validaciones->validated()['fk_tipoFoto_id'],
@@ -80,29 +84,52 @@ class FotoController extends Controller
 
             $usuarioId = $validaciones->validated()['fk_usuario_id'];
             $tipoFotoId = $validaciones->validated()['fk_tipoFoto_id'];
-            $urlFoto = Storage::url($path); 
 
+            // Actualizar el usuario dependiendo del tipo de foto
             $dataToUpdate = [];
-            if ($tipoFotoId == 1) {
+            if ($tipoFotoId == 1) { // Foto de perfil
                 $dataToUpdate = ['foto_perfil' => $urlFoto];
-            } elseif ($tipoFotoId == 3) {
+            } elseif ($tipoFotoId == 3) { // Foto de portada
                 $dataToUpdate = ['foto_portada' => $urlFoto];
             }
 
-            $response = Http::put("http://127.0.0.1:8000/api/usuario/actualizar/{$usuarioId}", $dataToUpdate);
+            if (!empty($dataToUpdate)) {
+                $response = Http::put("http://127.0.0.1:8000/api/usuario/actualizar/{$usuarioId}", $dataToUpdate);
 
-            if ($response->successful()) {
-                return response()->json([
-                    'message' => 'Foto subida y guardada correctamente, y el usuario ha sido actualizado.',
-                    'data' => $foto,
-                ], 201);
+                if (!$response->successful()) {
+                    return response()->json([
+                        'code' => 500,
+                        'data' => 'Error al actualizar el usuario en la API externa.'
+                    ], 500);
+                }
             } else {
-                return response()->json([
-                    'code' => 500,
-                    'data' => 'Error al actualizar el usuario en la API externa.'
-                ], 500);
+                // Crear una publicación si el tipo de foto es 2
+                if ($tipoFotoId == 2) {
+                    $dataCreatePublicacion = [
+                        'fk_usuario_id' => $usuarioId,
+                        'url_publicacion' => $urlFoto,
+                        'contenido' => $request->contenido, // Obtener el contenido desde el request
+                    ];
+
+                    $response = Http::post("http://127.0.0.1:8000/api/publicacion/crear", $dataCreatePublicacion);
+
+                    if (!$response->successful()) {
+                        return response()->json([
+                            'code' => 500,
+                            'data' => 'Error al crear la publicación en la API externa.'
+                        ], 500);
+                    }
+                } else {
+                    // Respuesta exitosa
+                    return response()->json([
+                        'code' => 201,
+                        'message' => 'Foto subida y procesada correctamente.',
+                        'data' => $foto,
+                    ], 201);
+                }
             }
         } catch (\Throwable $th) {
+            // Manejo de excepciones
             if (app()->environment('local')) {
                 return response()->json(['error' => $th->getMessage()], 500);
             }
@@ -112,6 +139,7 @@ class FotoController extends Controller
             ], 500);
         }
     }
+
 
 
     /**
@@ -144,7 +172,7 @@ class FotoController extends Controller
                 'fk_tipoFoto_id' => 'required|exists:tipo_foto,id',
                 'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
             ]);
-    
+
             if ($validaciones->fails()) {
                 return response()->json([
                     'code' => 400,
@@ -152,7 +180,7 @@ class FotoController extends Controller
                 ], 400);
             }
             $foto = FotoModel::find($id);
-    
+
             if ($foto) {
 
                 if ($request->hasFile('photo')) {
@@ -163,12 +191,12 @@ class FotoController extends Controller
                     $path = $request->file('photo')->store('photos', 'public');
                     $foto->url_foto = Storage::url($path);
                 }
-    
-                $foto->update($request->except(['photo'])); 
-    
+
+                $foto->update($request->except(['photo']));
+
                 $usuarioId = $validaciones->validated()['fk_usuario_id'];
                 $tipoFotoId = $validaciones->validated()['fk_tipoFoto_id'];
-                $urlFoto = $foto->url_foto; 
+                $urlFoto = $foto->url_foto;
 
                 $dataToUpdate = [];
                 if ($tipoFotoId == 1) {
@@ -176,9 +204,9 @@ class FotoController extends Controller
                 } elseif ($tipoFotoId == 3) {
                     $dataToUpdate = ['foto_portada' => $urlFoto];
                 }
- 
+
                 $response = Http::put("http://127.0.0.1:8000/api/usuario/actualizar/{$usuarioId}", $dataToUpdate);
-    
+
                 if ($response->successful()) {
                     return response()->json([
                         'code' => 200,
@@ -190,14 +218,12 @@ class FotoController extends Controller
                         'data' => 'Error al actualizar el usuario en la API externa.'
                     ], 500);
                 }
-    
             } else {
                 return response()->json([
                     'code' => 404,
                     'data' => 'Foto no encontrada'
                 ], 404);
             }
-    
         } catch (\Throwable $th) {
             if (app()->environment('local')) {
                 return response()->json(['error' => $th->getMessage()], 500);
@@ -208,7 +234,7 @@ class FotoController extends Controller
             ]);
         }
     }
-    
+
 
 
 
@@ -217,57 +243,55 @@ class FotoController extends Controller
      * Remove the specified resource from storage.
      */
 
-public function destroy($id)
-{
-    try {
-        $foto = FotoModel::find($id);
+    public function destroy($id)
+    {
+        try {
+            $foto = FotoModel::find($id);
 
-        if ($foto) {
-            $ruta = public_path('storage/' . $foto->url_foto);
-            if (file_exists($ruta)) {
-                unlink($ruta);
-            }
-            $tipoFotoId = $foto->fk_tipoFoto_id;
-            $foto->delete();
+            if ($foto) {
+                $ruta = public_path('storage/' . $foto->url_foto);
+                if (file_exists($ruta)) {
+                    unlink($ruta);
+                }
+                $tipoFotoId = $foto->fk_tipoFoto_id;
+                $foto->delete();
 
-            $usuarioId = $foto->fk_usuario_id;
-            $dataToUpdate = [];
+                $usuarioId = $foto->fk_usuario_id;
+                $dataToUpdate = [];
 
-            if ($tipoFotoId == 1) {
-                $dataToUpdate = ['foto_perfil' => 'No hay foto'];
-            } elseif ($tipoFotoId == 3) {
-                $dataToUpdate = ['foto_portada' => 'No hay foto'];
-            }
+                if ($tipoFotoId == 1) {
+                    $dataToUpdate = ['foto_perfil' => 'No hay foto'];
+                } elseif ($tipoFotoId == 3) {
+                    $dataToUpdate = ['foto_portada' => 'No hay foto'];
+                }
 
-            $response = Http::put("http://127.0.0.1:8000/api/usuario/actualizar/{$usuarioId}", $dataToUpdate);
+                $response = Http::put("http://127.0.0.1:8000/api/usuario/actualizar/{$usuarioId}", $dataToUpdate);
 
-            if ($response->successful()) {
-                return response()->json([
-                    'code' => 200,
-                    'data' => 'Foto eliminada correctamente y usuario actualizado.'
-                ]);
+                if ($response->successful()) {
+                    return response()->json([
+                        'code' => 200,
+                        'data' => 'Foto eliminada correctamente y usuario actualizado.'
+                    ]);
+                } else {
+                    return response()->json([
+                        'code' => 500,
+                        'data' => 'Error al actualizar el usuario en la API externa.'
+                    ], 500);
+                }
             } else {
                 return response()->json([
-                    'code' => 500,
-                    'data' => 'Error al actualizar el usuario en la API externa.'
-                ], 500);
+                    'code' => 400,
+                    'data' => 'La foto no se encuentra en nuestros registros'
+                ]);
             }
-
-        } else {
+        } catch (\Throwable $th) {
+            if (app()->environment('local')) {
+                return response()->json(['error' => $th->getMessage()], 500);
+            }
             return response()->json([
-                'code' => 400,
-                'data' => 'La foto no se encuentra en nuestros registros'
+                'code' => 500,
+                'data' => 'Error en el servidor'
             ]);
         }
-    } catch (\Throwable $th) {
-        if (app()->environment('local')) {
-            return response()->json(['error' => $th->getMessage()], 500);
-        }
-        return response()->json([
-            'code' => 500,
-            'data' => 'Error en el servidor'
-        ]);
     }
-}
-
 }

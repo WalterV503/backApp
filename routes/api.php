@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\FotoController;
+use App\Http\Controllers\PublicacionController;
+use App\Http\Controllers\PublicacionFotoController;
 use App\Http\Controllers\TipoFotoController;
 use App\Http\Controllers\UsuariosController;
 use Illuminate\Http\Request;
@@ -27,3 +29,9 @@ Route::post('/foto/crear', [FotoController::class, 'store']);
 Route::get('/foto/obtener/{id}', [FotoController::class, 'obtenerFotos']);
 Route::put('/foto/actualizar/{id}', [FotoController::class, 'update']);
 Route::delete('/foto/eliminar/{id}', [FotoController::class, 'destroy']);
+
+Route::post('/publicacion/crear', [PublicacionController::class, 'store']);
+Route::get('/publicacion/obtener', [PublicacionController::class, 'index']);
+Route::delete('/publicacion/eliminar/{id}', [PublicacionController::class, 'destroy']);
+
+Route::put('/publicacionFoto/actualizar/{id}', [PublicacionFotoController::class, 'update']);
